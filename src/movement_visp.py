@@ -42,6 +42,7 @@ previous_tag = np.zeros((1,3))
 movement = 0
 
 
+
 #Gets pose of end-effector from Baxter
 def getposeee(msg):
 
@@ -70,6 +71,7 @@ def getposeee(msg):
 
 
 
+
 #Gets the pose of tag from QR code
 def getposetag(msg):
 
@@ -84,7 +86,7 @@ def getposetag(msg):
 
 
 
-def movement(msg):
+def baxtermovement(msg):
     rospy.loginfo("ENTERED THE IK_TEST LOOP")
 
 
@@ -156,6 +158,9 @@ def movement(msg):
         tag_quat_y = 0
         tag_quat_z = 0
         tag_quat_w = 1
+        # #Close Baxter's left gripper
+        baxterleft = baxter_interface.Gripper('left')
+        baxterleft.close()
 
 
     #New pose to move towards
@@ -227,9 +232,6 @@ def movement(msg):
     limb = baxter_interface.Limb('left')
     limb.move_to_joint_positions(limb_joints)
 
-    # #Close Baxter's left gripper
-    # baxterleft = baxter_interface.Gripper('left')
-    # baxterleft.close()
  
     #Update previous_tag with the distance from Baxter's camera to QR code
     global previous_tag
@@ -269,7 +271,7 @@ def target_pose_listener():
 
     #Run main part of loop while rospy is not shutdown
     while not rospy.is_shutdown():
-        movement(tag_msg)
+        baxtermovement(tag_msg)
    
     rospy.spin()
 
