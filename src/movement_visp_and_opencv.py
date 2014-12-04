@@ -5,6 +5,10 @@ import struct
 import sys
 import numpy as np
 import rospy
+import baxter_interface
+import math
+
+from math import fabs
 
 from geometry_msgs.msg import (
     PoseStamped,
@@ -19,8 +23,7 @@ from baxter_core_msgs.srv import (
     SolvePositionIKRequest,
 )
 
-import baxter_interface
-import math
+
 
 from baxter_interface import CHECK_VERSION
 
@@ -41,6 +44,7 @@ pose_ee = np.full((7,1), None)
 position_object_opencv = Point()
 
 previous_tag = np.zeros((1,3))
+print previous_tag[0,1]
 
 movement = 0 #QR code movement (0,1,2)
 
@@ -129,13 +133,11 @@ def NewPoseUsingOpenCV(msg):
 
         # return PoseNoObjectSeen
         pass
-
-
-    print "Position of end-effector=",  pose_ee[0:3,:]
+    
 
 
     #Store position of object from OpenCV into local variables
-    position_OpenCV = msg.x
+    position_OpenCV = msg
 
     rospy.loginfo("OpenCV Point Position: [ %f, %f, %f ]"%(position_OpenCV.x, position_OpenCV.y, position_OpenCV.z))
    
@@ -146,71 +148,78 @@ def NewPoseUsingOpenCV(msg):
 
     rangefinder_dist = baxter_interface.analog_io.AnalogIO('left_hand_range').state()
 
+    rospy.loginfo("Rangefinder Distance: [ %f]"%(rangefinder_dist))
+
+
+    pointx = pose_ee[0,0]
+    pointy = pose_ee[1,0]
+    pointz = pose_ee[2,0]
+    quatx = 0
+    quaty = 1
+    quatz = 0
+    quatw = 0
+
+
+
+    #Rangefinder distance is over object
+    if rangefinder_dist < 100:
+
+        #Close Baxter's left gripper
+        baxterleft = baxter_interface.Gripper('left')
+        baxterleft.close()
 
 
     #Rangefinder distance is over object
     if rangefinder_dist < 150:
 
-        incremental_distance = 0.01
+        incremental_distance = 0.0025
 
         #X-position of point not within range of center of frame
-        if fabs(color_pos_x - 37) < 5:
+        if fabs(color_pos_x - 37) > 20:
             if color_pos_x < 37:
-                pointx = pose_ee[0,0] + incremental_distance
-            else:
-                pointx = pose_ee[0,0] - incremental_distance
-
-        #Y-position of point not within range of center of frame
-        if fabs(color_pos_y - 94) < 5:
-            if color_pos_y < 94:
                 pointy = pose_ee[1,0] + incremental_distance
             else:
                 pointy = pose_ee[1,0] - incremental_distance
 
-        #Set the z-direction and orientation appropriately
-        pointz = pose_ee[2,0]
-        quatx = 0
-        quaty = 1
-        quatz = 0
-        quatw = 0
+        #Y-position of point not within range of center of frame
+        if fabs(color_pos_y - 94) > 20:
+            if color_pos_y < 94:
+                pointx = pose_ee[0,0] - incremental_distance
+            else:
+                pointx = pose_ee[0,0] + incremental_distance
 
         #X-position and Y-position of point are within range of center of frame
-        if fabs(color_pos_x - 37) < 5 and fabs(color_pos_y - 94) < 5:
+        if fabs(color_pos_x - 37) <= 20 and fabs(color_pos_y - 94) <= 20:
             pointx = pose_ee[0,0]
             pointy = pose_ee[1,0]
             pointz = pose_ee[2,0] - 0.05
+
 
     #Rangefinder distance is nearly over object
     elif rangefinder_dist < 200:
     
-        incremental_distance = 0.01
+        incremental_distance = 0.005
 
         #X-position of point not within range of center of frame
-        if fabs(color_pos_x - 37) < 5:
+        if fabs(color_pos_x - 37) > 20:
             if color_pos_x < 37:
-                pointx = pose_ee[0,0] + incremental_distance
-            else:
-                pointx = pose_ee[0,0] - incremental_distance
-
-        #Y-position of point not within range of center of frame
-        if fabs(color_pos_y - 94) < 5:
-            if color_pos_y < 94:
                 pointy = pose_ee[1,0] + incremental_distance
             else:
                 pointy = pose_ee[1,0] - incremental_distance
 
-        #Set the z-direction and orientation appropriately
-        pointz = pose_ee[2,0]
-        quatx = 0
-        quaty = 1
-        quatz = 0
-        quatw = 0
+        #Y-position of point not within range of center of frame
+        if fabs(color_pos_y - 94) > 20:
+            if color_pos_y < 94:
+                pointx = pose_ee[0,0] - incremental_distance
+            else:
+                pointx = pose_ee[0,0] + incremental_distance
 
         #X-position and Y-position of point are within range of center of frame
-        if fabs(color_pos_x - 37) < 5 and fabs(color_pos_y - 94) < 5:
+        if fabs(color_pos_x - 37) <= 20 and fabs(color_pos_y - 94) <= 20:
             pointx = pose_ee[0,0]
             pointy = pose_ee[1,0]
             pointz = pose_ee[2,0] - 0.05
+
 
     #Rangefinder distance is barely over object
     elif rangefinder_dist < 250:
@@ -218,95 +227,80 @@ def NewPoseUsingOpenCV(msg):
         incremental_distance = 0.01
 
         #X-position of point not within range of center of frame
-        if fabs(color_pos_x - 31) < 5:
+        if fabs(color_pos_x - 31) > 20:
             if color_pos_x < 31:
-                pointx = pose_ee[0,0] + incremental_distance
-            else:
-                pointx = pose_ee[0,0] - incremental_distance
-
-        #Y-position of point not within range of center of frame
-        if fabs(color_pos_y - 52) < 5:
-            if color_pos_y < 52:
                 pointy = pose_ee[1,0] + incremental_distance
             else:
                 pointy = pose_ee[1,0] - incremental_distance
 
-        #Set the z-direction and orientation appropriately
-        pointz = pose_ee[2,0]
-        quatx = 0
-        quaty = 1
-        quatz = 0
-        quatw = 0
+        #Y-position of point not within range of center of frame
+        if fabs(color_pos_y - 52) > 20:
+            if color_pos_y < 52:
+                pointx = pose_ee[0,0] - incremental_distance
+            else:
+                pointx = pose_ee[0,0] + incremental_distance
 
         #X-position and Y-position of point are within range of center of frame
-        if fabs(color_pos_x - 31) < 5 and fabs(color_pos_y - 52) < 5:
+        if fabs(color_pos_x - 31) <= 20 and fabs(color_pos_y - 52) <= 20:
             pointx = pose_ee[0,0]
             pointy = pose_ee[1,0]
             pointz = pose_ee[2,0] - 0.05
+
 
     #Rangefinder distance is over object
     elif rangefinder_dist < 350:
  
-        incremental_distance = 0.01
+        incremental_distance = 0.015
 
         #X-position of point not within range of center of frame
-        if fabs(color_pos_x - 16) < 5:
+        if fabs(color_pos_x - 16) > 20:
             if color_pos_x < 16:
-                pointx = pose_ee[0,0] + incremental_distance
-            else:
-                pointx = pose_ee[0,0] - incremental_distance
-
-        #Y-position of point not within range of center of frame
-        if fabs(color_pos_y - 42) < 5:
-            if color_pos_y < 42:
                 pointy = pose_ee[1,0] + incremental_distance
             else:
                 pointy = pose_ee[1,0] - incremental_distance
 
-        #Set the z-direction and orientation appropriately
-        pointz = pose_ee[2,0]
-        quatx = 0
-        quaty = 1
-        quatz = 0
-        quatw = 0
+        #Y-position of point not within range of center of frame
+        if fabs(color_pos_y - 42) > 20:
+            if color_pos_y < 42:
+                pointx = pose_ee[0,0] - incremental_distance
+            else:
+                pointx = pose_ee[0,0] + incremental_distance
 
         #X-position and Y-position of point are within range of center of frame
-        if fabs(color_pos_x - 16) < 5 and fabs(color_pos_y - 42) < 5:
+        if fabs(color_pos_x - 16) <= 20 and fabs(color_pos_y - 42) <= 20:
             pointx = pose_ee[0,0]
             pointy = pose_ee[1,0]
-            pointz = pose_ee[2,0] - 0.05
+            pointz = pose_ee[2,0] - 0.1
+
+        print pointx,pointy
+
 
     #Rangefinder distance is too far above object to get an actual value
     else:
         
-        incremental_distance = 0.025
+        incremental_distance = 0.02
 
         #X-position of point not within range of center of frame
-        if fabs(color_pos_x - 0) < 25:
+        if fabs(color_pos_x - 0) > 50:
             if color_pos_x < 0:
-                pointx = pose_ee[0,0] + incremental_distance
-            else:
-                pointx = pose_ee[0,0] - incremental_distance
-
-        #Y-position of point not within range of center of frame
-        if fabs(color_pos_y - 0) < 25:
-            if color_pos_y < 0:
                 pointy = pose_ee[1,0] + incremental_distance
             else:
                 pointy = pose_ee[1,0] - incremental_distance
 
-        #Set the z-direction and orientation appropriately
-        pointz = pose_ee[2,0]
-        quatx = 0
-        quaty = 1
-        quatz = 0
-        quatw = 0
+        #Y-position of point not within range of center of frame
+        if fabs(color_pos_y - 0) > 50:
+            if color_pos_y < 0:
+                pointx = pose_ee[0,0] - incremental_distance
+            else:
+                pointx = pose_ee[0,0] + incremental_distance
+
+        pointz = pose_ee[2,0] - 0.1
 
         #X-position and Y-position of point are within range of center of frame
-        if fabs(color_pos_x - 0) < 25 and fabs(color_pos_y - 0) < 25:
+        if fabs(color_pos_x - 0) <= 50 and fabs(color_pos_y - 0) <= 50:
             pointx = pose_ee[0,0]
             pointy = pose_ee[1,0]
-            pointz = pose_ee[2,0] - 0.05
+            pointz = pose_ee[2,0] - 0.15
 
 
 
@@ -338,13 +332,11 @@ def NewPoseUsingOpenCV(msg):
 
 #Create PoseStamped() message to move Baxter towards QR code
 def NewPoseUsingQRcode(msg):
+
+    while not second_flag:
+        pass
  
     
-    #Wait for left gripper's end effector pose
-    while not first_flag:
-        pass
-
-
     print "position of end-effector=",  pose_ee[0:3,:]
 
     #Store pose of QR code from camera into local variables
@@ -502,7 +494,7 @@ def BaxterMovement(new_pose):
 
  
     print("I'm about to sleeeeep")
-    rospy.sleep(2.75)
+    rospy.sleep(1)
     print("I just woke up")
 
     return
@@ -521,17 +513,20 @@ def target_pose_listener():
     rospy.Subscriber("/visp_auto_tracker/object_position",PoseStamped,getPoseTag)
     rospy.Subscriber("/opencv/center_of_object",Point,getPositionObjectfromOpenCV)
 
-    #Calibrate left gripper
-    baxterleft = baxter_interface.Gripper('left')
-    baxterleft.calibrate()
 
 
+    #Wait for left gripper's end effector pose
+    while not first_flag:
+        pass
+
+
+    print "In main loop"
     #Move to home position
     move_to_home_pose = PoseStamped()
     move_to_home_pose.header=Header(stamp=rospy.Time.now(), frame_id='base')
     move_to_home_pose.pose.position=Point(
-                    x=0.4,
-                    y=0.5,
+                    x=0.8,
+                    y=0.3,
                     z=0.3,
                 )
     move_to_home_pose.pose.orientation=Quaternion(
@@ -544,9 +539,9 @@ def target_pose_listener():
     BaxterMovement(move_to_home_pose)
 
 
-    #Wait for QR pose message to be stored
-    while not second_flag:
-        pass
+    #Calibrate left gripper
+    baxterleft = baxter_interface.Gripper('left')
+    baxterleft.calibrate()
 
 
     #Run main part of loop while rospy is not shutdown
