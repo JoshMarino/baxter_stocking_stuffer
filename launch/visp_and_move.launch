@@ -11,7 +11,16 @@
   </node>
 
 
+  <!-- Node to open Baxter's left hand camera -->
+  <node pkg="baxter_tools" type="camera_control.py" name="open_left_camera" output="screen"  args="-o left_hand_camera -r 640x400">
+  </node>
+
+  <!-- Node to move baxter close to an object (either QR or vision tracking) -->
   <node pkg="baxter_stocking_stuffer" type="movement_visp.py" name="movement_node" output="screen" >
   </node>
+
+  <!-- Node to publish center of object after thresholded with OpenCV -->
+<!--   <node pkg="baxter_stocking_stuffer" type="vision_test.py" name="vision_node" output="screen" >
+  </node> -->
 
 </launch>
