@@ -11,22 +11,35 @@ from geometry_msgs.msg import Point
 from cv_bridge import CvBridge, CvBridgeError
 
 
-pub = rospy.Publisher('ball_position_cam', Point)
+pub = rospy.Publisher('opencv/center_of_object', Point)
 
 
+#Creates trackbar for thresholding HSV image
 def initialize_threshold_trackbar():
-
-
 
 	# Initialize thresholding values
 	low_h  = 0
-	high_h = 10
-	low_s  = 110
-	high_s = 255
-	low_v  = 150
+	high_h = 4
+	low_s  = 135
+	high_s = 245
+	low_v  = 60
 	high_v = 255
-	#lower_red = np.array([0,110,150])
-	#upper_red = np.array([10,255,255])
+
+	#HSV initial thresholded values for red,orange,green,blue,yellow
+	#lower_red = np.array([0,135,0])
+	#upper_red = np.array([4,245,255])
+
+	#lower_orange = np.array([6,131,0])
+	#upper_orange = np.array([35,255,255])
+
+	#lower_green = np.array([60,85,0])
+	#upper_green = np.array([90,175,255])
+
+	#lower_blue = np.array([85,100,50])
+	#upper_blue = np.array([115,175,64])
+
+	#lower_yellow = np.array([15,95,68])
+	#upper_yellow = np.array([70,255,255])
 
 	#Creating slidable trackbars for HSV thresholding values
 	# "Do nothing" callback
@@ -40,9 +53,10 @@ def initialize_threshold_trackbar():
 	cv2.createTrackbar("Low V", "Control", low_v, 255, nothing)
 	cv2.createTrackbar("High V", "Control", high_v, 255, nothing)
 
-	print "Initialized."
+	print "Initialized thresholing trackbar."
 
 
+#Thresholds image and stores position of object in (x,y) coordinates of the camera's frame, with origin at center.
 def callback(message):
 
 
@@ -78,15 +92,14 @@ def callback(message):
 	thresholded = cv2.erode(thresholded, np.ones((2,2), np.uint8), iterations=1)
 
 
+
 	#Get left hand range state from rangefinder
-	#dist = baxter_interface.analog_io.AnalogIO('left_hand_range').state()
+	dist = baxter_interface.analog_io.AnalogIO('left_hand_range').state()
 
-	#if dist>65000:
-        #        print "==[VISION]== ERROR - calibrate_distance - no distance found"
-	#else:
-	#	print "Rangefinder distance to object:", distance
+	#if dist<65000:
+		#print "Rangefinder distance to object:", dist
 
-	
+
 	#Finding center of red ball
 	ret,thresh = cv2.threshold(thresholded,157,255,0)
 	contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
@@ -105,23 +118,23 @@ def callback(message):
 		P.y = -(cy - (height/2))
 		pub.publish(P)
 
-		print "Center of ball: (", P.x, ", ", P.y, ")"
-
-	else:
-		print "Ball off screen."
+		#print "Center of ball: (", P.x, ", ", P.y, ")", "A/B:", A,B,A/B
+	# else:
+	# 	print "Ball off screen."
 
 
 	#Draw contour around object
-	cv2.drawContours(thresholded,contours,-1,(255,0,0),3)
+	# cv2.drawContours(thresholded,contours,-1,(255,0,0),3)
 
 
 	#Printing to screen the images
 	cv2.imshow("Original", cv_image)
 	cv2.imshow("Thresholded", thresholded)
-    	cv2.waitKey(3)
+	cv2.waitKey(3)
 
 
-def listener():
+#Subscribes to left hand camera image feed
+def main():
 
 	#Create names for OpenCV images and orient them appropriately
 	cv2.namedWindow("Control", 1)
@@ -136,12 +149,8 @@ def listener():
 	rospy.init_node('left_hand_camera', anonymous=True)
 
 	#Subscribe to left hand camera image 
-	rospy.Subscriber("/cameras/right_hand_camera/image", Image, callback)
+	rospy.Subscriber("/cameras/left_hand_camera/image", Image, callback)
 	#rospy.Subscriber("/camera_node/image_raw", Image, callback)
-
-
-
-
 
 
 	#Keep from exiting until this node is stopped
@@ -150,4 +159,4 @@ def listener():
 	
          
 if __name__ == '__main__':
-     listener()
+     main()
