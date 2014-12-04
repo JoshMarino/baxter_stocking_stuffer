@@ -44,7 +44,7 @@ movement = 0
 
 
 #Gets pose of end-effector from Baxter
-def getposeee(msg):
+def getposeEE(msg):
 
     pose = msg.pose
 
@@ -82,6 +82,7 @@ def getposetag(msg):
     second_flag = True
 
     return
+
 
 
 
@@ -265,7 +266,7 @@ def target_pose_listener():
 
 
     #Subscribe to Baxter's left endpoint state and Visp autotracker messages
-    rospy.Subscriber("/robot/limb/left/endpoint_state",EndpointState,getposeee)
+    rospy.Subscriber("/robot/limb/left/endpoint_state",EndpointState,getposeEE)
     rospy.Subscriber("/visp_auto_tracker/object_position",PoseStamped,getposetag)
 
     #Calibrate left gripper
