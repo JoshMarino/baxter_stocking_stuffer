@@ -28,8 +28,8 @@ from baxter_core_msgs.msg import EndpointState
 
 
 #Setting flags to False
-first_flag = False
-second_flag = False
+first_flag = False #position end-effector
+second_flag = False #QR pose
 
 
 #Initialization of global variables
@@ -85,28 +85,8 @@ def getposetag(msg):
 
 
 
-
-def baxtermovement(msg):
-    rospy.loginfo("ENTERED THE IK_TEST LOOP")
-
-
-    rospy.loginfo("Getting robot state... ")
-    rs = baxter_interface.RobotEnable(CHECK_VERSION)
-    init_state = rs.state().enabled
-
-
-    rospy.loginfo("Enabling robot... ")	
-    rs.enable()
-
-    #Defining left limb for IK Service Client
-    limbw = "left"
-    ns = "ExternalTools/" + limbw + "/PositionKinematicsNode/IKService"
-
-    iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
-    ikreq = SolvePositionIKRequest()
-    hdr = Header(stamp=rospy.Time.now(), frame_id='base')    
-   
-    rospy.loginfo("Received target location message!")
+#Moves baxter towards QR code
+def NewPoseUsingQRcode(msg):
  
     
     #Wait for left gripper's end effector pose
@@ -122,6 +102,7 @@ def baxtermovement(msg):
 
     rospy.loginfo("Tag Point Position: [ %f, %f, %f ]"%(position_visp.x, position_visp.y, position_visp.z))
     rospy.loginfo("Tag Quat Orientation: [ %f, %f, %f, %f]"%(quat_visp.x, quat_visp.y, quat_visp.z, quat_visp.w))
+
 
     tag_pos_x = position_visp.x
     tag_pos_y = position_visp.y
@@ -140,6 +121,7 @@ def baxtermovement(msg):
         global movement
         movement = movement+1
 
+    print "Movement counter:",movement
     #Account for changes in tag position and only move towards the tag once
     if movement == 0:
         tag_pos_x = 0
@@ -151,6 +133,7 @@ def baxtermovement(msg):
         tag_quat_w = 1
     elif movement == 2:
         movement = 0
+
         tag_pos_x = 0
         tag_pos_y = 0
         tag_pos_z = 0
@@ -158,7 +141,8 @@ def baxtermovement(msg):
         tag_quat_y = 0
         tag_quat_z = 0
         tag_quat_w = 1
-        # #Close Baxter's left gripper
+
+        #Close Baxter's left gripper
         baxterleft = baxter_interface.Gripper('left')
         baxterleft.close()
 
@@ -189,13 +173,45 @@ def baxtermovement(msg):
                     w=quatw,
                 )
 
-
     print "Desired position to move to", move_to_pose.pose.position
     print "Desired orientation to move to", move_to_pose.pose.orientation
 
+    #Update previous_tag with the distance from Baxter's camera to QR code
+    global previous_tag
+    previous_tag[0,0] = msg.pose.position.x
+    previous_tag[0,1] = msg.pose.position.y
+    previous_tag[0,2] = msg.pose.position.z
+
+    return move_to_pose
+
+
+
+
+def BaxterMovement(new_pose):
+    rospy.loginfo("ENTERED THE MOVEMENT LOOP")
+
+
+    rospy.loginfo("Getting robot state... ")
+    rs = baxter_interface.RobotEnable(CHECK_VERSION)
+    init_state = rs.state().enabled
+
+
+    rospy.loginfo("Enabling robot... ") 
+    rs.enable()
+
+    #Defining left limb for IK Service Client
+    limbw = "left"
+    ns = "ExternalTools/" + limbw + "/PositionKinematicsNode/IKService"
+
+    iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
+    ikreq = SolvePositionIKRequest()
+    hdr = Header(stamp=rospy.Time.now(), frame_id='base')    
+   
+    rospy.loginfo("Received target location message!")
+
 
     #Request IK Service Client with new pose to move to
-    ikreq.pose_stamp.append(move_to_pose)
+    ikreq.pose_stamp.append(new_pose)
     try:
         #rospy.wait_for_service(ns, 5.0)
         print("in try service")
@@ -233,12 +249,6 @@ def baxtermovement(msg):
     limb.move_to_joint_positions(limb_joints)
 
  
-    #Update previous_tag with the distance from Baxter's camera to QR code
-    global previous_tag
-    previous_tag[0,0] = msg.pose.position.x
-    previous_tag[0,1] = msg.pose.position.y
-    previous_tag[0,2] = msg.pose.position.z
-
     print("I'm about to sleeeeep")
     rospy.sleep(2.75)
     print("I just woke up")
@@ -251,6 +261,8 @@ def baxtermovement(msg):
 
 def target_pose_listener():
     rospy.init_node('target_pose_listener',anonymous = True)
+
+
 
     #Subscribe to Baxter's left endpoint state and Visp autotracker messages
     rospy.Subscriber("/robot/limb/left/endpoint_state",EndpointState,getposeee)
@@ -269,9 +281,11 @@ def target_pose_listener():
     while not second_flag:
         pass
 
+
     #Run main part of loop while rospy is not shutdown
     while not rospy.is_shutdown():
-        baxtermovement(tag_msg)
+        BaxterMovement(NewPoseUsingQRcode(tag_msg))
+
    
     rospy.spin()
 
