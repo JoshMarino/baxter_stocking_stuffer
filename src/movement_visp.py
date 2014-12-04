@@ -86,7 +86,7 @@ def getposetag(msg):
 
 
 
-#Moves baxter towards QR code
+#Create PoseStamped() message to move Baxter towards QR code
 def NewPoseUsingQRcode(msg):
  
     
@@ -187,7 +187,7 @@ def NewPoseUsingQRcode(msg):
 
 
 
-
+#Accepts PoseStamped() message and moves towards it
 def BaxterMovement(new_pose):
     rospy.loginfo("ENTERED THE MOVEMENT LOOP")
 
