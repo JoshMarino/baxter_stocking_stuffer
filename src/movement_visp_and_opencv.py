@@ -16,7 +16,7 @@ from geometry_msgs.msg import (
     Point,
     Quaternion,
 )
-from std_msgs.msg import Header
+from std_msgs.msg import String,Header
 
 from baxter_core_msgs.srv import (
     SolvePositionIK,
@@ -24,10 +24,14 @@ from baxter_core_msgs.srv import (
 )
 
 
-
 from baxter_interface import CHECK_VERSION
 
 from baxter_core_msgs.msg import EndpointState
+
+
+#Create publisher to publish center of object detected
+pub = rospy.Publisher('color_identifier', String)
+pub.publish("Red")
 
 
 #Setting flags to False
@@ -111,30 +115,8 @@ def NewPoseUsingOpenCV(msg):
     
     #Wait for position of object from OpenCV node
     while not third_flag:
-        # #New pose to move to in order to attempt to find appropriate color
-        # pointx = pose_ee[0,0]
-        # pointy = pose_ee[1,0]
-        # pointz = pose_ee[2,0] + 0.05
-
-        # #Create PoseStamped() message
-        # PoseNoObjectSeen = PoseStamped()
-        # PoseNoObjectSeen.header=Header(stamp=rospy.Time.now(), frame_id='base')
-        # PoseNoObjectSeen.pose.position=Point(
-        #                 x=pointx,
-        #                 y=pointy,
-        #                 z=pointz,
-                    
-        # PoseNoObjectSeen.pose.orientation=Quaternion(
-        #                 x=quatx,
-        #                 y=quaty,
-        #                 z=quatz,
-        #                 w=quatw,
-        #             )
-
-        # return PoseNoObjectSeen
         pass
     
-
 
     #Store position of object from OpenCV into local variables
     position_OpenCV = msg
