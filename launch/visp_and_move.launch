@@ -36,11 +36,11 @@
   </node>
 
   <!-- Node listening to Visp autotracker, and when a qr code is read, publishes a PoseStamped() message to move towards-->
-  <node pkg="baxter_stocking_stuffer" type="poseusingqrcode.py" name="movement_node" output="screen" >
+  <node pkg="baxter_stocking_stuffer" type="poseusingqrcode.py" name="visp_node" output="screen" >
   </node>
 
   <!-- Node listening to vision_test that publishes PoseStamped() message for Baxter's gripper to get within grapsing reach -->
-  <node pkg="baxter_stocking_stuffer" type="poseusingcolordetection.py" name="movement_node" output="screen" >
+  <node pkg="baxter_stocking_stuffer" type="poseusingcolordetection.py" name="color_node" output="screen" >
   </node>
 
 </launch>
