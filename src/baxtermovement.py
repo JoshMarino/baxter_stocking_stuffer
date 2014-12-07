@@ -91,14 +91,10 @@ def BaxterMovement(new_pose):
         rospy.loginfo("INVALID POSE - No Valid Joint Solution Found.")
 
 
-    #Move left limb to limb_joints found from IK
+    #Move left limb to limb_joints found from IK service
     limb = baxter_interface.Limb('left')
     limb.move_to_joint_positions(limb_joints)
 
- 
-    print("I'm about to sleeeeep")
-    # rospy.sleep(2)
-    print("I just woke up")
 
 
     return
@@ -108,31 +104,27 @@ def BaxterMovement(new_pose):
 
 
 def main():
+
     rospy.init_node('baxtermovement',anonymous = True)
 
 
     rospy.loginfo("ENTERED THE MOVEMENT LOOP")
-
-
     rospy.loginfo("Getting robot state... ")
     rs = baxter_interface.RobotEnable(CHECK_VERSION)
     init_state = rs.state().enabled
 
-
+    #Enable Baxter
     rospy.loginfo("Enabling robot... ") 
     rs.enable()
 
+    #Calibrate and open left gripper
     baxterleft = baxter_interface.Gripper('left')
     baxterleft.calibrate()
     baxterleft.open()
 
 
-    rospy.sleep(3)
-
-
     #Subscribe to topic for PoseStamped messages to be sent to
     rospy.Subscriber("/baxter_movement/posestamped",PoseStamped,BaxterMovement)
-
 
 
     rospy.spin()
