@@ -102,18 +102,17 @@ def BaxterMovement(new_pose):
 
 
 
-
+#Main section of code to run
 def main():
 
     rospy.init_node('baxtermovement',anonymous = True)
 
-
+    #Enables Baxter
     rospy.loginfo("ENTERED THE MOVEMENT LOOP")
     rospy.loginfo("Getting robot state... ")
     rs = baxter_interface.RobotEnable(CHECK_VERSION)
     init_state = rs.state().enabled
 
-    #Enable Baxter
     rospy.loginfo("Enabling robot... ") 
     rs.enable()
 

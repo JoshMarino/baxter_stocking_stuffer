@@ -307,8 +307,9 @@ def NewPoseUsingOpenCV(msg):
 
 
 
-
+#Main section of code to run
 def main():
+    
     rospy.init_node('create_pose_using_color_detection',anonymous = True)
 
 

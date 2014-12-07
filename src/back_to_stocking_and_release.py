@@ -30,11 +30,6 @@ from baxter_core_msgs.msg import EndpointState
 
 
 
-#Create publisher to publish center of object detected
-pub_color = rospy.Publisher('color_identifier', String, queue_size=10, latch=True)
-color = "red"
-
-
 #Setting flags to False
 first_flag = False #position of stocking
 second_flag = False #T/F for whether to move back to stocking
@@ -56,7 +51,8 @@ pub_state_backtostocking = rospy.Publisher('start/backtostocking', Bool)
 
 pub_state_releasepresent = rospy.Publisher('start/releasepresent', Bool)
 
-pub_state_sweepstocking = rospy.Publisher('sweep', Bool)
+pub_state_sweepstocking = rospy.Publisher('/start/sweep', Bool)
+
 
 
 
@@ -104,7 +100,6 @@ def getPoseStocking(msg):
     first_flag = True
 
     return
-
 
 
 

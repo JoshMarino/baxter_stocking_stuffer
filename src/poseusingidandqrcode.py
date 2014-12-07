@@ -66,6 +66,9 @@ pose_start[6,0] = 0
 #Create publisher to send PoseStamped() message to topic for Baxter to move towards
 pub_baxtermovement = rospy.Publisher('baxter_movement/posestamped', PoseStamped)
 
+#Create publisher to store PoseStamped() message of stocking for when returning to drop present
+pub_posestocking = rospy.Publisher('pose/stocking', PoseStamped)
+
 
 
 
@@ -154,7 +157,13 @@ def FindCorrectID():
     while not fourth_flag:
         pass
  
+    #Global variables being used within this section
     global pose_present, previous_ID
+
+    #Local variables for determining movement between stockings
+    stocking_distance_apart = 0.2 #m
+    dist_qr_above_stocking = 0.15 #m
+
 
     #Move to start pose
     if iteration == 0:
@@ -179,7 +188,7 @@ def FindCorrectID():
         #Move to above stocking to read QR code
         pointx = pose_ee[0,0]
         pointy = pose_ee[1,0]
-        pointz = pose_ee[2,0] + 0.05
+        pointz = pose_ee[2,0] + dist_qr_above_stocking
       
         quatx = pose_ee[3,0]
         quaty = pose_ee[4,0]
@@ -214,8 +223,8 @@ def FindCorrectID():
 
         #Move to second stocking
         pointx = pose_ee[0,0]
-        pointy = pose_ee[1,0] - 0.1
-        pointz = pose_ee[2,0] - 0.05
+        pointy = pose_ee[1,0] - stocking_distance_apart
+        pointz = pose_ee[2,0] - dist_qr_above_stocking
       
         quatx = pose_ee[3,0]
         quaty = pose_ee[4,0]
@@ -235,7 +244,7 @@ def FindCorrectID():
         #Store position of present to above second stocking
         pose_present[0,0] = pose_present[0,0]
         pose_present[1,0] = pose_present[1,0]
-        pose_present[2,0] = pose_present[2,0] + 0.05
+        pose_present[2,0] = pose_present[2,0] + dist_qr_above_stocking
 
         pose_present[3,0] = pose_present[3,0]
         pose_present[4,0] = pose_present[4,0]
@@ -244,7 +253,7 @@ def FindCorrectID():
 
         #Move to third stocking
         pointx = pose_ee[0,0]
-        pointy = pose_ee[1,0] - 0.1
+        pointy = pose_ee[1,0] - stocking_distance_apart
         pointz = pose_ee[2,0]
       
         quatx = pose_ee[3,0]
@@ -259,7 +268,7 @@ def FindCorrectID():
             #Update pose of present
             pose_present[0,0] = pose_present[0,0]
             pose_present[1,0] = pose_present[1,0]
-            pose_present[2,0] = pose_present[2,0] - 0.05
+            pose_present[2,0] = pose_present[2,0] - dist_qr_above_stocking
 
             pose_present[3,0] = pose_present[3,0]
             pose_present[4,0] = pose_present[4,0]
@@ -268,7 +277,7 @@ def FindCorrectID():
 
             #Update pose of end-effector such that it does not move
             pointx = pose_ee[0,0]
-            pointy = pose_ee[1,0] - 0.1
+            pointy = pose_ee[1,0] - stocking_distance_apart
             pointz = pose_ee[2,0]
           
             quatx = pose_ee[3,0]
@@ -291,7 +300,7 @@ def FindCorrectID():
         #Store position of present to above third stocking
         pose_present[0,0] = pose_present[0,0]
         pose_present[1,0] = pose_present[1,0]
-        pose_present[2,0] = pose_present[2,0] + 0.05
+        pose_present[2,0] = pose_present[2,0] + dist_qr_above_stocking
 
         pose_present[3,0] = pose_present[3,0]
         pose_present[4,0] = pose_present[4,0]
@@ -300,7 +309,7 @@ def FindCorrectID():
 
         #Move to fourth stocking
         pointx = pose_ee[0,0]
-        pointy = pose_ee[1,0] - 0.1
+        pointy = pose_ee[1,0] - stocking_distance_apart
         pointz = pose_ee[2,0]
       
         quatx = pose_ee[3,0]
@@ -320,7 +329,7 @@ def FindCorrectID():
         #Store position of present to above fourth stocking
         pose_present[0,0] = pose_present[0,0]
         pose_present[1,0] = pose_present[1,0]
-        pose_present[2,0] = pose_present[2,0] + 0.05
+        pose_present[2,0] = pose_present[2,0] + dist_qr_above_stocking
 
         pose_present[3,0] = pose_present[3,0]
         pose_present[4,0] = pose_present[4,0]
@@ -346,7 +355,7 @@ def FindCorrectID():
     elif iteration > 1000:
 
         #Remain stationary, account for movement to next stocking,
-        pointy = pointy - 0.05
+        pointy = pointy - stocking_distance_apart
 
         #Publish pose of present
         move_to_present = PoseStamped()
@@ -398,8 +407,9 @@ def FindCorrectID():
 
 
 
-
+#Main section of code to run
 def main():
+    
     rospy.init_node('create_pose_using_qr_code',anonymous = True)
 
 
