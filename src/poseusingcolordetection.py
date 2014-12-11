@@ -31,8 +31,8 @@ from baxter_core_msgs.msg import EndpointState
 
 
 #Create publisher to publish center of object detected - temporarily
-pub_color = rospy.Publisher('color_identifier', String, queue_size=10, latch=True)
-color = "red"
+# pub_color = rospy.Publisher('color_identifier', String, queue_size=10, latch=True)
+# color = "red"
 
 
 #Setting flags to False
@@ -47,6 +47,8 @@ pose_ee = np.full((7,1), None)
 
 position_object_opencv = Point()
 
+movement = 0
+
 
 
 #Create publisher to send PoseStamped() message to topic for Baxter to move towards
@@ -58,12 +60,16 @@ pub_state_backtostocking = rospy.Publisher('start/backtostocking', Bool)
 
 
 
+
+
 #Obtain T/F state of whether to move towards specified color
 def getStateColorDetection(msg):
 
     global StateColorDetection
 
     StateColorDetection = msg.data
+
+    return
 
 
 
@@ -112,7 +118,7 @@ def getPositionObjectfromOpenCV(msg):
 def NewPoseUsingOpenCV(msg):
  
     #Only obtain a new pose if asked to
-    if StateColorDetection == "True":
+    if StateColorDetection == True:
 
 
         #Wait for position of object from OpenCV node
@@ -143,44 +149,85 @@ def NewPoseUsingOpenCV(msg):
         quatz = 0
         quatw = 0
 
-
+        global movement
 
         #Rangefinder distance is directly over object
-        if rangefinder_dist < 100:
+        if rangefinder_dist < 98 and movement==0:
+
+            rospy.sleep(2)
 
             #Close Baxter's left gripper
-            baxterleft = baxter_interface.Gripper('left')
-            baxterleft.close()
+            baxterleft1 = baxter_interface.Gripper('left')
+            rospy.sleep(2)
+            baxterleft1.close()
 
-            rospy.sleep(0.5)
+            print "Grasped object."
 
-            #Turn movement off, and go to next segment (Move back to stocking)
-            pub_state_opencv.publish("False")
-            pub_state_backtostocking.publish("True")
+            rospy.sleep(2)
 
+            pointx = 0.75
+            pointy = 0.27
+            pointz = 0.15
+            quatx = 0
+            quaty = 1
+            quatz = 0
+            quatw = 0
 
-        #Rangefinder distance is over object
-        if rangefinder_dist < 150:
+            print "Z location (above table):",pointz
+
+            print "Moving above table before going back to stocking."
+
+            movement = 1
+
+        elif rangefinder_dist < 130:
 
             incremental_distance = 0.0025
 
             #X-position of point not within range of center of frame
-            if fabs(color_pos_x - 37) > 20:
-                if color_pos_x < 37:
+            if fabs(color_pos_x - 50) > 50:
+                if color_pos_x < 50:
                     pointy = pose_ee[1,0] + incremental_distance
                 else:
                     pointy = pose_ee[1,0] - incremental_distance
 
             #Y-position of point not within range of center of frame
-            if fabs(color_pos_y - 94) > 20:
-                if color_pos_y < 94:
+            if fabs(color_pos_y - 120) > 50:
+                if color_pos_y < 120:
                     pointx = pose_ee[0,0] - incremental_distance
                 else:
                     pointx = pose_ee[0,0] + incremental_distance
 
             #X-position and Y-position of point are within range of center of frame
-            if fabs(color_pos_x - 37) <= 20 and fabs(color_pos_y - 94) <= 20:
-                pointz = pose_ee[2,0] - 0.05
+            if fabs(color_pos_x - 50) <= 50 and fabs(color_pos_y - 120) <= 50:
+                pointz = pose_ee[2,0] - 0.01
+
+            rospy.sleep(1)
+
+
+        #Rangefinder distance is over object
+        elif rangefinder_dist < 150:
+
+            incremental_distance = 0.0025
+
+            #X-position of point not within range of center of frame
+            if fabs(color_pos_x - 50) > 50:
+                if color_pos_x < 50:
+                    pointy = pose_ee[1,0] + incremental_distance
+                else:
+                    pointy = pose_ee[1,0] - incremental_distance
+
+            #Y-position of point not within range of center of frame
+            if fabs(color_pos_y - 105) > 50:
+                if color_pos_y < 105:
+                    pointx = pose_ee[0,0] - incremental_distance
+                else:
+                    pointx = pose_ee[0,0] + incremental_distance
+
+            #X-position and Y-position of point are within range of center of frame
+            if fabs(color_pos_x - 50) <= 50 and fabs(color_pos_y - 105) <= 50:
+                pointz = pose_ee[2,0] - 0.025
+
+            rospy.sleep(1)
 
 
         # #Rangefinder distance is nearly over object
@@ -230,6 +277,8 @@ def NewPoseUsingOpenCV(msg):
             if fabs(color_pos_x - 31) <= 20 and fabs(color_pos_y - 52) <= 20:
                 pointz = pose_ee[2,0] - 0.05
 
+            rospy.sleep(1.5)
+
 
         #Rangefinder distance is over object
         elif rangefinder_dist < 350:
@@ -253,6 +302,8 @@ def NewPoseUsingOpenCV(msg):
             #X-position and Y-position of point are within range of center of frame
             if fabs(color_pos_x - 16) <= 20 and fabs(color_pos_y - 42) <= 20:
                 pointz = pose_ee[2,0] - 0.1
+
+            rospy.sleep(2.5)
 
 
         #Rangefinder distance is too far above object to get an actual value
@@ -280,6 +331,7 @@ def NewPoseUsingOpenCV(msg):
             if fabs(color_pos_x - 0) <= 50 and fabs(color_pos_y - 0) <= 50:
                 pointz = pose_ee[2,0] - 0.15
 
+            rospy.sleep(4.5)
 
 
         #Combine position and orientation in a PoseStamped() message
@@ -301,7 +353,54 @@ def NewPoseUsingOpenCV(msg):
         pub_baxtermovement.publish(move_to_pose)
 
 
-    rospy.sleep(2)
+
+        global first_flag
+        first_flag = False
+        
+
+        rospy.sleep(3)
+
+
+        #Preliminary movement between above table and stocking such that no collision occurs
+        if movement == 1:
+            pointx = -0.25
+            pointy = 0.7
+            pointz = 0.3
+            quatx = -0.5
+            quaty = 0.5
+            quatz = 0.5
+            quatw = 0.5
+
+            movement = 2
+
+            print "Moving back to stocking-scan starting pose."
+
+            #Combine position and orientation in a PoseStamped() message
+            move_to_pose = PoseStamped()
+            move_to_pose.header=Header(stamp=rospy.Time.now(), frame_id='base')
+            move_to_pose.pose.position=Point(
+                            x=pointx,
+                            y=pointy,
+                            z=pointz,
+                        )
+            move_to_pose.pose.orientation=Quaternion(
+                            x=quatx,
+                            y=quaty,
+                            z=quatz,
+                            w=quatw,
+                        )
+            
+            #Send PoseStamped() message to Baxter's movement function
+            pub_baxtermovement.publish(move_to_pose)
+
+        if movement == 2:
+            rospy.sleep(5)
+            #Turn movement off, and go to next segment (Move back to stocking)
+            pub_state_opencv.publish(False)
+            print "Starting script for BacktoStocking."
+            pub_state_backtostocking.publish(True)
+
+            movement = 0
 
     return 
 
@@ -309,7 +408,7 @@ def NewPoseUsingOpenCV(msg):
 
 #Main section of code to run
 def main():
-    
+
     rospy.init_node('create_pose_using_color_detection',anonymous = True)
 
 
@@ -319,8 +418,8 @@ def main():
     rospy.Subscriber("/start/colordetection",Bool,getStateColorDetection)
 
   
-    #Temporarily publish the color of object to look for
-    pub_color.publish(color)
+    # #Temporarily publish the color of object to look for
+    # pub_color.publish(color)
 
 
     #Wait for left gripper's end effector pose

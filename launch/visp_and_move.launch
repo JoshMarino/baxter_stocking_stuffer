@@ -3,6 +3,7 @@
   <!-- Include launch file that starts AR tracker and identifies stocking -->
   <include file="$(find baxter_stocking_stuffer)/launch/ar_trackv2.launch"/>
 
+
   <!-- Node to open Baxter's left hand camera, after closing them all -->
   <node pkg="baxter_tools" type="camera_control.py" name="close_left_camera" output="screen"  args="-c left_hand_camera">
   </node>
@@ -31,8 +32,8 @@
   </node>
 
   <!-- Once stocking has been identified, determines the pose of the stocking using QR code -->
-  <node pkg="baxter_stocking_stuffer" type="poseusingidandqrcode.py" name="movement_node" output="screen" >
-  </node> -->
+  <node pkg="baxter_stocking_stuffer" type="poseusingidandqrcode.py" name="stocking_pose" output="screen" >
+  </node>
 
   <!-- Node to publish center of object after thresholded with OpenCV -->
   <node pkg="baxter_stocking_stuffer" type="open_cv_vision.py" name="vision_node" output="screen" >
@@ -44,11 +45,8 @@
 
 
   <!-- Node that moves Baxter's gripper and held present back to stocking, then releases into stocking -->
-  <node pkg="baxter_stocking_stuffer" type="back_to_stocking_and_release.py" name="visp_node" output="screen" >
+  <node pkg="baxter_stocking_stuffer" type="back_to_stocking_and_release.py" name="returns_present" output="screen" >
   </node>
-
-
-
 
 
 </launch>

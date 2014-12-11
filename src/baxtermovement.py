@@ -61,11 +61,9 @@ def BaxterMovement(new_pose):
     ikreq.pose_stamp.append(new_pose)
     try:
         #rospy.wait_for_service(ns, 5.0)
-        print("in try service")
         resp = iksvc(ikreq)
     except (rospy.ServiceException, rospy.ROSException), e:
         rospy.logerr("Service call failed: %s" % (e,))
-        print("in except service")
         return 1
     print resp
 
@@ -94,7 +92,6 @@ def BaxterMovement(new_pose):
     #Move left limb to limb_joints found from IK service
     limb = baxter_interface.Limb('left')
     limb.move_to_joint_positions(limb_joints)
-
 
 
     return

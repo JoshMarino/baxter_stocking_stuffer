@@ -1,5 +1,6 @@
 <launch>
 
+
 	<!-- Arguements to start up AR tracker -->
 	<arg name="marker_size" default="4.4" />
 	<arg name="max_new_marker_error" default="0.08" />
@@ -11,8 +12,10 @@
 	<!-- Node that starts AR tracker -->
 	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen" args="$(arg marker_size) $(arg max_new_marker_error) $(arg max_track_error) $(arg cam_image_topic) $(arg cam_info_topic) $(arg output_frame)" />
 
+
 	<!-- Node that identifies the stocking and associated color of the present to look for -->
 	<node pkg="baxter_stocking_stuffer" type="needed_present_identifier.py" name="gift_identity_node" output="screen" >
 	</node>
+
 
 </launch>
